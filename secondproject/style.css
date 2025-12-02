@@ -1,0 +1,44 @@
+div{
+    background-color: blue;
+    color : white ;
+}
+
+button{
+    background-color: green;
+}
+
+.heading{
+    color : red;
+}
+
+#rectangle{
+    background-color: pink;
+    color : black;
+}
+
+p{ 
+    text-align : center ;
+}
+
+#heading{
+    text-decoration: white dotted underline;
+    font-size: 49px;
+    text-transform: uppercase;
+}
+
+#h1{
+    font-weight: normal;
+}
+
+p{
+    font-family:cursive;
+    text-transform: capitalize;
+}
+
+#two{
+
+    background-color: aquamarine;
+    font-family : Georgia, 'Times New Roman', Times, serif;
+    text-align : left;
+
+}

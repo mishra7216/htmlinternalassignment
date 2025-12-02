@@ -1,0 +1,247 @@
+<!-- students.xml - Student Details XML File -->
+<?xml version="1.0" encoding="UTF-8"?>
+<student_details xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                 xsi:noNamespaceSchemaLocation="students.xsd">
+    
+    <student registration_number="2021CSE001">
+        <name>
+            <first_name>Rahul</first_name>
+            <last_name>Sharma</last_name>
+        </name>
+        <department>Computer Science</department>
+        <address>123 MG Road, Bangalore, Karnataka</address>
+        <phone_number>080-1234567</phone_number>
+    </student>
+    
+    <student registration_number="2021ECE045">
+        <name>
+            <first_name>Priya</first_name>
+            <last_name>Patel</last_name>
+        </name>
+        <department>Electronics</department>
+        <address>456 Park Street, Mumbai, Maharashtra</address>
+        <phone_number>022-9876543</phone_number>
+    </student>
+    
+    <student registration_number="2021MEC089">
+        <name>
+            <first_name>Amit</first_name>
+            <last_name>Kumar</last_name>
+        </name>
+        <department>Mechanical Engineering</department>
+        <address>789 Civil Lines, Delhi</address>
+        <phone_number>011-5551234</phone_number>
+    </student>
+    
+    <student registration_number="2021EEE023">
+        <name>
+            <first_name>Sneha</first_name>
+            <last_name>Reddy</last_name>
+        </name>
+        <department>Electrical Engineering</department>
+        <address>321 Anna Nagar, Chennai, Tamil Nadu</address>
+        <phone_number>044-7778889</phone_number>
+    </student>
+    
+    <student registration_number="2021CSE078">
+        <name>
+            <first_name>Arjun</first_name>
+            <last_name>Verma</last_name>
+        </name>
+        <department>Computer Science</department>
+        <address>567 Sector 15, Noida, Uttar Pradesh</address>
+        <phone_number>120-4445556</phone_number>
+    </student>
+    
+</student_details>
+
+
+<!-- ============================================================= -->
+<!-- students.xsd - XML Schema Definition File -->
+<!-- Save this as a separate file named students.xsd -->
+<!-- ============================================================= -->
+
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+    
+    <!-- Root element definition -->
+    <xs:element name="student_details">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="student" type="StudentType" minOccurs="1" maxOccurs="unbounded"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+    
+    <!-- Student complex type -->
+    <xs:complexType name="StudentType">
+        <xs:sequence>
+            <!-- Name is grouped with first_name and last_name -->
+            <xs:element name="name">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="first_name" type="xs:string"/>
+                        <xs:element name="last_name" type="xs:string"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            
+            <xs:element name="department" type="xs:string"/>
+            <xs:element name="address" type="xs:string"/>
+            
+            <!-- Phone number with restriction XXX-XXXX format -->
+            <xs:element name="phone_number">
+                <xs:simpleType>
+                    <xs:restriction base="xs:string">
+                        <!-- Pattern: 3 digits, hyphen, 7 digits -->
+                        <xs:pattern value="\d{3}-\d{7}"/>
+                    </xs:restriction>
+                </xs:simpleType>
+            </xs:element>
+        </xs:sequence>
+        
+        <!-- Registration number is an attribute -->
+        <xs:attribute name="registration_number" type="xs:string" use="required"/>
+    </xs:complexType>
+    
+</xs:schema>
+
+
+<!-- ============================================================= -->
+<!-- validate_xml.php - PHP Script to Validate XML against XSD -->
+<!-- ============================================================= -->
+
+<?php
+// This PHP script validates the XML file against the XSD schema
+
+function validateXMLWithSchema($xmlFile, $xsdFile) {
+    // Enable user error handling
+    libxml_use_internal_errors(true);
+    
+    // Create a new DOMDocument
+    $xml = new DOMDocument();
+    
+    // Load XML file
+    if (!$xml->load($xmlFile)) {
+        echo "<h3>❌ Failed to load XML file</h3>";
+        displayErrors();
+        return false;
+    }
+    
+    // Validate against XSD schema
+    if (!$xml->schemaValidate($xsdFile)) {
+        echo "<h3>❌ XML validation failed against XSD schema</h3>";
+        displayErrors();
+        return false;
+    }
+    
+    echo "<h3>✅ XML is valid according to the XSD schema!</h3>";
+    
+    // Display student data
+    displayStudentData($xml);
+    
+    return true;
+}
+
+function displayErrors() {
+    $errors = libxml_get_errors();
+    if (!empty($errors)) {
+        echo "<div style='background: #f8d7da; padding: 15px; border-radius: 5px; margin: 10px 0;'>";
+        echo "<strong>Validation Errors:</strong><br>";
+        foreach ($errors as $error) {
+            echo "Line {$error->line}: {$error->message}<br>";
+        }
+        echo "</div>";
+    }
+    libxml_clear_errors();
+}
+
+function displayStudentData($xml) {
+    echo "<h3>Student Details:</h3>";
+    echo "<table border='1' cellpadding='10' cellspacing='0' style='border-collapse: collapse; width: 100%;'>";
+    echo "<tr style='background: #667eea; color: white;'>
+            <th>Registration No</th>
+            <th>First Name</th>
+            <th>Last Name</th>
+            <th>Department</th>
+            <th>Address</th>
+            <th>Phone Number</th>
+          </tr>";
+    
+    $students = $xml->getElementsByTagName('student');
+    
+    foreach ($students as $student) {
+        $regNo = $student->getAttribute('registration_number');
+        $firstName = $student->getElementsByTagName('first_name')->item(0)->nodeValue;
+        $lastName = $student->getElementsByTagName('last_name')->item(0)->nodeValue;
+        $department = $student->getElementsByTagName('department')->item(0)->nodeValue;
+        $address = $student->getElementsByTagName('address')->item(0)->nodeValue;
+        $phone = $student->getElementsByTagName('phone_number')->item(0)->nodeValue;
+        
+        echo "<tr>";
+        echo "<td>$regNo</td>";
+        echo "<td>$firstName</td>";
+        echo "<td>$lastName</td>";
+        echo "<td>$department</td>";
+        echo "<td>$address</td>";
+        echo "<td>$phone</td>";
+        echo "</tr>";
+    }
+    
+    echo "</table>";
+}
+
+// Usage
+echo "<!DOCTYPE html>
+<html>
+<head>
+    <title>XML Schema Validation</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; background: #f0f0f0; }
+        h2 { color: #667eea; }
+        table { background: white; margin-top: 20px; }
+        th { background: #667eea; color: white; padding: 12px; }
+        td { padding: 10px; border: 1px solid #ddd; }
+        tr:hover { background: #f8f9ff; }
+    </style>
+</head>
+<body>
+    <h2>📚 Student XML Schema Validation</h2>";
+
+validateXMLWithSchema('students.xml', 'students.xsd');
+
+echo "</body></html>";
+?>
+
+
+<!-- ============================================================= -->
+<!-- INSTRUCTIONS FOR USAGE -->
+<!-- ============================================================= -->
+
+<!--
+TO USE THIS XML AND SCHEMA:
+
+1. Save the XML content (from top until the schema section) as "students.xml"
+
+2. Save the XSD schema (the xs:schema section) as "students.xsd"
+
+3. Save the PHP validation script as "validate_xml.php"
+
+4. Place all three files in the same directory
+
+5. Run the PHP script in a web server or use command line:
+   php validate_xml.php
+
+KEY FEATURES IMPLEMENTED:
+✅ Root element is "student_details"
+✅ Student is a complex element with department, address, and phone number
+✅ First name and last name are grouped under "name"
+✅ Registration number is an attribute of student element
+✅ Phone number restriction: XXX-XXXXXXX format (3 digits - 7 digits)
+✅ XML validates against the schema
+
+PHONE NUMBER FORMAT:
+- Must match pattern: \d{3}-\d{7}
+- Example: 080-1234567
+- X represents any digit (0-9)
+-->

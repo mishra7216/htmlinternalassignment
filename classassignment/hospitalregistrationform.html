@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hospital Registration Form</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 20px auto;
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+
+        h1 {
+            color: #667eea;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 600;
+        }
+
+        label .required {
+            color: #dc3545;
+        }
+
+        input[type="text"],
+        input[type="email"],
+        input[type="tel"],
+        input[type="date"],
+        input[type="number"],
+        select,
+        textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+
+        input:focus,
+        select:focus,
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .error {
+            border-color: #dc3545 !important;
+        }
+
+        .error-message {
+            color: #dc3545;
+            font-size: 14px;
+            margin-top: 5px;
+            display: none;
+        }
+
+        .error-message.show {
+            display: block;
+        }
+
+        .radio-group,
+        .checkbox-group {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .radio-group label,
+        .checkbox-group label {
+            display: flex;
+            align-items: center;
+            font-weight: normal;
+            cursor: pointer;
+        }
+
+        .radio-group input,
+        .checkbox-group input {
+            width: auto;
+            margin-right: 8px;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 18px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 600;
+            width: 100%;
+            margin-top: 20px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .success-message {
+            background: #d4edda;
+            border: 2px solid #28a745;
+            color: #155724;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            display: none;
+            margin-bottom: 20px;
+        }
+
+        .success-message.show {
+            display: block;
+        }
+
+        @media (max-width: 768px) {
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🏥 Hospital Registration Form</h1>
+        <p class="subtitle">Please fill in all required fields</p>
+
+        <div class="success-message" id="successMessage">
+            ✅ Registration Successful! Your details have been submitted.
+        </div>
+
+        <form id="hospitalForm" onsubmit="return validateForm(event)">
+            <div class="form-row">
+                <div class="form-group">
+                    <label>First Name <span class="required">*</span></label>
+                    <input type="text" id="firstName" name="firstName" placeholder="Enter first name">
+                    <div class="error-message" id="firstNameError">Please enter a valid first name</div>
+                </div>
+
+                <div class="form-group">
+                    <label>Last Name <span class="required">*</span></label>
+                    <input type="text" id="lastName" name="lastName" placeholder="Enter last name">
+                    <div class="error-message" id="lastNameError">Please enter a valid last name</div>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Date of Birth <span class="required">*</span></label>
+                    <input type="date" id="dob" name="dob">
+                    <div class="error-message" id="dobError">Please select your date of birth</div>
+                </div>
+
+                <div class="form-group">
+                    <label>Age <span class="required">*</span></label>
+                    <input type="number" id="age" name="age" placeholder="Enter age" min="0" max="150">
+                    <div class="error-message" id="ageError">Please enter a valid age (0-150)</div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Gender <span class="required">*</span></label>
+                <div class="radio-group">
+                    <label><input type="radio" name="gender" value="male"> Male</label>
+                    <label><input type="radio" name="gender" value="female"> Female</label>
+                    <label><input type="radio" name="gender" value="other"> Other</label>
+                </div>
+                <div class="error-message" id="genderError">Please select your gender</div>
+            </div>
+
+            <div class="form-group">
+                <label>Email <span class="required">*</span></label>
+                <input type="email" id="email" name="email" placeholder="example@email.com">
+                <div class="error-message" id="emailError">Please enter a valid email address</div>
+            </div>
+
+            <div class="form-group">
+                <label>Phone Number <span class="required">*</span></label>
+                <input type="tel" id="phone" name="phone" placeholder="1234567890">
+                <div class="error-message" id="phoneError">Please enter a valid 10-digit phone number</div>
+            </div>
+
+            <div class="form-group">
+                <label>Address <span class="required">*</span></label>
+                <textarea id="address" name="address" rows="3" placeholder="Enter complete address"></textarea>
+                <div class="error-message" id="addressError">Please enter your address</div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label>City <span class="required">*</span></label>
+                    <input type="text" id="city" name="city" placeholder="Enter city">
+                    <div class="error-message" id="cityError">Please enter your city</div>
+                </div>
+
+                <div class="form-group">
+                    <label>Pincode <span class="required">*</span></label>
+                    <input type="text" id="pincode" name="pincode" placeholder="123456">
+                    <div class="error-message" id="pincodeError">Please enter a valid 6-digit pincode</div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Blood Group <span class="required">*</span></label>
+                <select id="bloodGroup" name="bloodGroup">
+                    <option value="">Select Blood Group</option>
+                    <option value="A+">A+</option>
+                    <option value="A-">A-</option>
+                    <option value="B+">B+</option>
+                    <option value="B-">B-</option>
+                    <option value="AB+">AB+</option>
+                    <option value="AB-">AB-</option>
+                    <option value="O+">O+</option>
+                    <option value="O-">O-</option>
+                </select>
+                <div class="error-message" id="bloodGroupError">Please select your blood group</div>
+            </div>
+
+            <div class="form-group">
+                <label>Medical History</label>
+                <div class="checkbox-group">
+                    <label><input type="checkbox" name="conditions" value="diabetes"> Diabetes</label>
+                    <label><input type="checkbox" name="conditions" value="hypertension"> Hypertension</label>
+                    <label><input type="checkbox" name="conditions" value="asthma"> Asthma</label>
+                    <label><input type="checkbox" name="conditions" value="heart"> Heart Disease</label>
+                    <label><input type="checkbox" name="conditions" value="none"> None</label>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Emergency Contact Name <span class="required">*</span></label>
+                <input type="text" id="emergencyName" name="emergencyName" placeholder="Enter emergency contact name">
+                <div class="error-message" id="emergencyNameError">Please enter emergency contact name</div>
+            </div>
+
+            <div class="form-group">
+                <label>Emergency Contact Number <span class="required">*</span></label>
+                <input type="tel" id="emergencyPhone" name="emergencyPhone" placeholder="1234567890">
+                <div class="error-message" id="emergencyPhoneError">Please enter a valid emergency contact number</div>
+            </div>
+
+            <button type="submit" class="btn">Register Patient</button>
+        </form>
+    </div>
+
+    <script>
+        function validateForm(event) {
+            event.preventDefault();
+            
+            let isValid = true;
+
+            // Clear previous errors
+            document.querySelectorAll('.error').forEach(el => el.classList.remove('error'));
+            document.querySelectorAll('.error-message').forEach(el => el.classList.remove('show'));
+
+            // First Name validation
+            const firstName = document.getElementById('firstName');
+            if (!firstName.value.trim() || !/^[a-zA-Z\s]+$/.test(firstName.value)) {
+                showError('firstName', 'firstNameError');
+                isValid = false;
+            }
+
+            // Last Name validation
+            const lastName = document.getElementById('lastName');
+            if (!lastName.value.trim() || !/^[a-zA-Z\s]+$/.test(lastName.value)) {
+                showError('lastName', 'lastNameError');
+                isValid = false;
+            }
+
+            // DOB validation
+            const dob = document.getElementById('dob');
+            if (!dob.value) {
+                showError('dob', 'dobError');
+                isValid = false;
+            }
+
+            // Age validation
+            const age = document.getElementById('age');
+            if (!age.value || age.value < 0 || age.value > 150) {
+                showError('age', 'ageError');
+                isValid = false;
+            }
+
+            // Gender validation
+            const gender = document.querySelector('input[name="gender"]:checked');
+            if (!gender) {
+                document.getElementById('genderError').classList.add('show');
+                isValid = false;
+            }
+
+            // Email validation
+            const email = document.getElementById('email');
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!email.value.trim() || !emailRegex.test(email.value)) {
+                showError('email', 'emailError');
+                isValid = false;
+            }
+
+            // Phone validation (10 digits)
+            const phone = document.getElementById('phone');
+            const phoneRegex = /^[0-9]{10}$/;
+            if (!phoneRegex.test(phone.value)) {
+                showError('phone', 'phoneError');
+                isValid = false;
+            }
+
+            // Address validation
+            const address = document.getElementById('address');
+            if (!address.value.trim()) {
+                showError('address', 'addressError');
+                isValid = false;
+            }
+
+            // City validation
+            const city = document.getElementById('city');
+            if (!city.value.trim() || !/^[a-zA-Z\s]+$/.test(city.value)) {
+                showError('city', 'cityError');
+                isValid = false;
+            }
+
+            // Pincode validation (6 digits)
+            const pincode = document.getElementById('pincode');
+            const pincodeRegex = /^[0-9]{6}$/;
+            if (!pincodeRegex.test(pincode.value)) {
+                showError('pincode', 'pincodeError');
+                isValid = false;
+            }
+
+            // Blood Group validation
+            const bloodGroup = document.getElementById('bloodGroup');
+            if (!bloodGroup.value) {
+                showError('bloodGroup', 'bloodGroupError');
+                isValid = false;
+            }
+
+            // Emergency Contact Name validation
+            const emergencyName = document.getElementById('emergencyName');
+            if (!emergencyName.value.trim() || !/^[a-zA-Z\s]+$/.test(emergencyName.value)) {
+                showError('emergencyName', 'emergencyNameError');
+                isValid = false;
+            }
+
+            // Emergency Phone validation
+            const emergencyPhone = document.getElementById('emergencyPhone');
+            if (!phoneRegex.test(emergencyPhone.value)) {
+                showError('emergencyPhone', 'emergencyPhoneError');
+                isValid = false;
+            }
+
+            if (isValid) {
+                document.getElementById('successMessage').classList.add('show');
+                document.getElementById('hospitalForm').reset();
+                
+                // Scroll to success message
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+                
+                // Hide success message after 5 seconds
+                setTimeout(() => {
+                    document.getElementById('successMessage').classList.remove('show');
+                }, 5000);
+            } else {
+                // Scroll to first error
+                const firstError = document.querySelector('.error');
+                if (firstError) {
+                    firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            }
+
+            return false;
+        }
+
+        function showError(inputId, errorId) {
+            document.getElementById(inputId).classList.add('error');
+            document.getElementById(errorId).classList.add('show');
+        }
+
+        // Auto-calculate age from DOB
+        document.getElementById('dob').addEventListener('change', function() {
+            const dob = new Date(this.value);
+            const today = new Date();
+            let age = today.getFullYear() - dob.getFullYear();
+            const monthDiff = today.getMonth() - dob.getMonth();
+            
+            if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dob.getDate())) {
+                age--;
+            }
+            
+            document.getElementById('age').value = age;
+        });
+    </script>
+</body>
+</html>

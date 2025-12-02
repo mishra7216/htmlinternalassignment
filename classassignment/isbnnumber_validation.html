@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ISBN Validator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 600px;
+            width: 100%;
+        }
+
+        h1 {
+            color: #667eea;
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 32px;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 600;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .btn {
+            width: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px;
+            font-size: 18px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 600;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .result {
+            margin-top: 20px;
+            padding: 20px;
+            border-radius: 10px;
+            display: none;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .result.valid {
+            background: #d4edda;
+            border: 2px solid #28a745;
+            color: #155724;
+        }
+
+        .result.invalid {
+            background: #f8d7da;
+            border: 2px solid #dc3545;
+            color: #721c24;
+        }
+
+        .result-icon {
+            font-size: 40px;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        .result-text {
+            font-size: 18px;
+            font-weight: 600;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        .result-details {
+            font-size: 14px;
+            text-align: center;
+        }
+
+        .info-box {
+            background: #f8f9ff;
+            border: 2px solid #667eea;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 30px;
+        }
+
+        .info-box h3 {
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .info-box ul {
+            margin-left: 20px;
+            color: #666;
+        }
+
+        .info-box li {
+            margin: 8px 0;
+        }
+
+        .examples {
+            background: #fff9e6;
+            border: 2px solid #ffc107;
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 15px;
+        }
+
+        .examples h4 {
+            color: #856404;
+            margin-bottom: 10px;
+        }
+
+        .example-item {
+            font-family: 'Courier New', monospace;
+            background: white;
+            padding: 8px;
+            border-radius: 5px;
+            margin: 5px 0;
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📚 ISBN Validator</h1>
+        <p class="subtitle">Validate ISBN-10 and ISBN-13 numbers</p>
+
+        <div class="input-group">
+            <label for="isbnInput">Enter ISBN Number:</label>
+            <input 
+                type="text" 
+                id="isbnInput" 
+                placeholder="Enter ISBN (e.g., 978-0-306-40615-7)"
+                onkeypress="if(event.key === 'Enter') validateISBN()"
+            >
+        </div>
+
+        <button class="btn" onclick="validateISBN()">Validate ISBN</button>
+
+        <div class="result" id="result"></div>
+
+        <div class="info-box">
+            <h3>About ISBN</h3>
+            <ul>
+                <li><strong>ISBN-10:</strong> 10 digits format (older books)</li>
+                <li><strong>ISBN-13:</strong> 13 digits format (current standard)</li>
+                <li>Can include hyphens or spaces (they're ignored)</li>
+                <li>Last digit is a checksum for validation</li>
+            </ul>
+
+            <div class="examples">
+                <h4>Valid Examples:</h4>
+                <div class="example-item">ISBN-13: 978-0-306-40615-7</div>
+                <div class="example-item">ISBN-13: 9780306406157</div>
+                <div class="example-item">ISBN-10: 0-306-40615-2</div>
+                <div class="example-item">ISBN-10: 0306406152</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function validateISBN() {
+            const input = document.getElementById('isbnInput').value.trim();
+            const result = document.getElementById('result');
+            
+            if (!input) {
+                showResult(false, 'Please enter an ISBN number');
+                return;
+            }
+
+            // Remove hyphens and spaces
+            const cleanISBN = input.replace(/[-\s]/g, '');
+
+            // Check if it's ISBN-10 or ISBN-13
+            if (cleanISBN.length === 10) {
+                if (validateISBN10(cleanISBN)) {
+                    showResult(true, 'Valid ISBN-10', `The ISBN "${input}" is valid!`);
+                } else {
+                    showResult(false, 'Invalid ISBN-10', 'The checksum does not match. Please verify the number.');
+                }
+            } else if (cleanISBN.length === 13) {
+                if (validateISBN13(cleanISBN)) {
+                    showResult(true, 'Valid ISBN-13', `The ISBN "${input}" is valid!`);
+                } else {
+                    showResult(false, 'Invalid ISBN-13', 'The checksum does not match. Please verify the number.');
+                }
+            } else {
+                showResult(false, 'Invalid Format', 'ISBN must be either 10 or 13 digits long.');
+            }
+        }
+
+        function validateISBN10(isbn) {
+            // ISBN-10 regex: 9 digits followed by either a digit or X
+            const regex = /^[0-9]{9}[0-9X]$/;
+            
+            if (!regex.test(isbn)) {
+                return false;
+            }
+
+            // Calculate checksum
+            let sum = 0;
+            for (let i = 0; i < 9; i++) {
+                sum += parseInt(isbn[i]) * (10 - i);
+            }
+
+            // Last character can be X (representing 10)
+            const lastChar = isbn[9];
+            const checkDigit = lastChar === 'X' ? 10 : parseInt(lastChar);
+            sum += checkDigit;
+
+            // Valid if sum is divisible by 11
+            return sum % 11 === 0;
+        }
+
+        function validateISBN13(isbn) {
+            // ISBN-13 regex: exactly 13 digits
+            const regex = /^[0-9]{13}$/;
+            
+            if (!regex.test(isbn)) {
+                return false;
+            }
+
+            // Calculate checksum
+            let sum = 0;
+            for (let i = 0; i < 12; i++) {
+                const digit = parseInt(isbn[i]);
+                // Multiply odd positions by 1, even positions by 3
+                sum += (i % 2 === 0) ? digit : digit * 3;
+            }
+
+            // Calculate check digit
+            const checkDigit = (10 - (sum % 10)) % 10;
+            
+            // Valid if calculated check digit matches the last digit
+            return checkDigit === parseInt(isbn[12]);
+        }
+
+        function showResult(isValid, title, details) {
+            const result = document.getElementById('result');
+            
+            const icon = isValid ? '✅' : '❌';
+            const className = isValid ? 'valid' : 'invalid';
+            
+            result.innerHTML = `
+                <div class="result-icon">${icon}</div>
+                <div class="result-text">${title}</div>
+                <div class="result-details">${details}</div>
+            `;
+            
+            result.className = `result ${className}`;
+            result.style.display = 'block';
+        }
+
+        // Test on page load with example
+        window.onload = function() {
+            document.getElementById('isbnInput').value = '978-0-306-40615-7';
+        };
+    </script>
+</body>
+</html>

@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Alphabet Chart</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            max-width: 900px;
+            margin: 40px auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        
+        h1 {
+            text-align: center;
+            color: #667eea;
+            margin-bottom: 30px;
+        }
+        
+        .alphabet-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 10px;
+            margin-bottom: 30px;
+        }
+        
+        .letter-btn {
+            padding: 20px;
+            font-size: 24px;
+            font-weight: bold;
+            border: 3px solid #667eea;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .letter-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .letter-btn:active {
+            transform: scale(0.95);
+        }
+        
+        .example-box {
+            background: #f8f9ff;
+            border: 3px solid #667eea;
+            border-radius: 15px;
+            padding: 30px;
+            min-height: 200px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .example-box h2 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 32px;
+        }
+        
+        .example-image {
+            width: 150px;
+            height: 150px;
+            margin: 20px 0;
+            object-fit: contain;
+        }
+        
+        .example-text {
+            font-size: 20px;
+            color: #333;
+            text-align: center;
+        }
+        
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔤 Interactive Alphabet Chart</h1>
+        
+        <div class="alphabet-grid" id="alphabetGrid"></div>
+        
+        <div class="example-box" id="exampleBox">
+            <p class="example-text">Click on any letter to see an example!</p>
+        </div>
+    </div>
+
+    <script>
+        // Data for each letter with examples
+        const alphabetData = {
+            'A': { word: 'Apple', emoji: '🍎', description: 'A is for Apple - a delicious fruit!' },
+            'B': { word: 'Ball', emoji: '⚽', description: 'B is for Ball - fun to play with!' },
+            'C': { word: 'Cat', emoji: '🐱', description: 'C is for Cat - a furry pet!' },
+            'D': { word: 'Dog', emoji: '🐕', description: 'D is for Dog - man\'s best friend!' },
+            'E': { word: 'Elephant', emoji: '🐘', description: 'E is for Elephant - the largest land animal!' },
+            'F': { word: 'Fish', emoji: '🐟', description: 'F is for Fish - lives in water!' },
+            'G': { word: 'Grapes', emoji: '🍇', description: 'G is for Grapes - sweet and juicy!' },
+            'H': { word: 'House', emoji: '🏠', description: 'H is for House - where we live!' },
+            'I': { word: 'Ice Cream', emoji: '🍦', description: 'I is for Ice Cream - a cold treat!' },
+            'J': { word: 'Juice', emoji: '🧃', description: 'J is for Juice - refreshing drink!' },
+            'K': { word: 'Kite', emoji: '🪁', description: 'K is for Kite - flies in the sky!' },
+            'L': { word: 'Lion', emoji: '🦁', description: 'L is for Lion - king of the jungle!' },
+            'M': { word: 'Moon', emoji: '🌙', description: 'M is for Moon - shines at night!' },
+            'N': { word: 'Nest', emoji: '🪹', description: 'N is for Nest - where birds live!' },
+            'O': { word: 'Orange', emoji: '🍊', description: 'O is for Orange - a citrus fruit!' },
+            'P': { word: 'Pizza', emoji: '🍕', description: 'P is for Pizza - everyone\'s favorite!' },
+            'Q': { word: 'Queen', emoji: '👸', description: 'Q is for Queen - a royal lady!' },
+            'R': { word: 'Rainbow', emoji: '🌈', description: 'R is for Rainbow - colorful arc in the sky!' },
+            'S': { word: 'Sun', emoji: '☀️', description: 'S is for Sun - gives us light and warmth!' },
+            'T': { word: 'Tree', emoji: '🌳', description: 'T is for Tree - provides shade and oxygen!' },
+            'U': { word: 'Umbrella', emoji: '☂️', description: 'U is for Umbrella - protects from rain!' },
+            'V': { word: 'Violin', emoji: '🎻', description: 'V is for Violin - a musical instrument!' },
+            'W': { word: 'Watch', emoji: '⌚', description: 'W is for Watch - tells us the time!' },
+            'X': { word: 'Xylophone', emoji: '🎹', description: 'X is for Xylophone - a percussion instrument!' },
+            'Y': { word: 'Yacht', emoji: '⛵', description: 'Y is for Yacht - a sailing boat!' },
+            'Z': { word: 'Zebra', emoji: '🦓', description: 'Z is for Zebra - has black and white stripes!' }
+        };
+
+        // Generate alphabet buttons
+        const grid = document.getElementById('alphabetGrid');
+        for (let i = 65; i <= 90; i++) {
+            const letter = String.fromCharCode(i);
+            const btn = document.createElement('button');
+            btn.className = 'letter-btn';
+            btn.textContent = letter;
+            btn.onclick = () => showExample(letter);
+            grid.appendChild(btn);
+        }
+
+        // Show example for clicked letter
+        function showExample(letter) {
+            const data = alphabetData[letter];
+            const box = document.getElementById('exampleBox');
+            
+            box.innerHTML = `
+                <h2>${letter}</h2>
+                <div class="example-image" style="font-size: 100px;">${data.emoji}</div>
+                <p class="example-text"><strong>${data.word}</strong></p>
+                <p class="example-text">${data.description}</p>
+            `;
+        }
+    </script>
+</body>
+</html>

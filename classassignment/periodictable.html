@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Periodic Table</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: #1a1a2e;
+            color: white;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 36px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .legend {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+        }
+
+        .legend-box {
+            width: 30px;
+            height: 20px;
+            border-radius: 4px;
+        }
+
+        .periodic-table {
+            display: grid;
+            grid-template-columns: repeat(18, 1fr);
+            gap: 2px;
+            margin-bottom: 20px;
+        }
+
+        .element {
+            aspect-ratio: 1;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            padding: 5px;
+            position: relative;
+        }
+
+        .element:hover {
+            transform: scale(1.15);
+            z-index: 10;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.5);
+        }
+
+        .atomic-number {
+            font-size: 10px;
+            position: absolute;
+            top: 3px;
+            left: 5px;
+        }
+
+        .symbol {
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        .name {
+            font-size: 9px;
+            text-align: center;
+        }
+
+        .atomic-mass {
+            font-size: 8px;
+        }
+
+        .empty {
+            background: transparent;
+        }
+
+        /* Element Categories */
+        .alkali { background: #ff6b6b; }
+        .alkaline { background: #feca57; }
+        .transition { background: #ff9ff3; }
+        .post-transition { background: #54a0ff; }
+        .metalloid { background: #48dbfb; }
+        .nonmetal { background: #1dd1a1; }
+        .halogen { background: #00d2d3; }
+        .noble { background: #a29bfe; }
+        .lanthanide { background: #fd79a8; }
+        .actinide { background: #fdcb6e; }
+
+        .info-panel {
+            background: #16213e;
+            padding: 30px;
+            border-radius: 15px;
+            margin-top: 20px;
+            display: none;
+        }
+
+        .info-panel.show {
+            display: block;
+            animation: fadeIn 0.3s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .info-item {
+            background: #1a1a2e;
+            padding: 15px;
+            border-radius: 10px;
+        }
+
+        .info-label {
+            color: #888;
+            font-size: 12px;
+            margin-bottom: 5px;
+        }
+
+        .info-value {
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        @media (max-width: 1200px) {
+            .periodic-table {
+                grid-template-columns: repeat(18, minmax(40px, 1fr));
+            }
+            
+            .symbol {
+                font-size: 16px;
+            }
+            
+            .name {
+                font-size: 7px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>⚛️ Interactive Periodic Table</h1>
+        
+        <div class="legend">
+            <div class="legend-item">
+                <div class="legend-box alkali"></div>
+                <span>Alkali Metals</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-box alkaline"></div>
+                <span>Alkaline Earth</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-box transition"></div>
+                <span>Transition Metals</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-box post-transition"></div>
+                <span>Post-transition</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-box metalloid"></div>
+                <span>Metalloids</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-box nonmetal"></div>
+                <span>Nonmetals</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-box halogen"></div>
+                <span>Halogens</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-box noble"></div>
+                <span>Noble Gases</span>
+            </div>
+        </div>
+
+        <div class="periodic-table" id="periodicTable"></div>
+
+        <div class="info-panel" id="infoPanel">
+            <h2 id="elementName" style="margin-bottom: 20px;"></h2>
+            <div class="info-grid" id="infoGrid"></div>
+        </div>
+    </div>
+
+    <script>
+        const elements = [
+            {num: 1, symbol: 'H', name: 'Hydrogen', mass: 1.008, category: 'nonmetal', row: 1, col: 1, electrons: '1', state: 'Gas'},
+            {num: 2, symbol: 'He', name: 'Helium', mass: 4.003, category: 'noble', row: 1, col: 18, electrons: '2', state: 'Gas'},
+            {num: 3, symbol: 'Li', name: 'Lithium', mass: 6.941, category: 'alkali', row: 2, col: 1, electrons: '2,1', state: 'Solid'},
+            {num: 4, symbol: 'Be', name: 'Beryllium', mass: 9.012, category: 'alkaline', row: 2, col: 2, electrons: '2,2', state: 'Solid'},
+            {num: 5, symbol: 'B', name: 'Boron', mass: 10.81, category: 'metalloid', row: 2, col: 13, electrons: '2,3', state: 'Solid'},
+            {num: 6, symbol: 'C', name: 'Carbon', mass: 12.01, category: 'nonmetal', row: 2, col: 14, electrons: '2,4', state: 'Solid'},
+            {num: 7, symbol: 'N', name: 'Nitrogen', mass: 14.01, category: 'nonmetal', row: 2, col: 15, electrons: '2,5', state: 'Gas'},
+            {num: 8, symbol: 'O', name: 'Oxygen', mass: 16.00, category: 'nonmetal', row: 2, col: 16, electrons: '2,6', state: 'Gas'},
+            {num: 9, symbol: 'F', name: 'Fluorine', mass: 19.00, category: 'halogen', row: 2, col: 17, electrons: '2,7', state: 'Gas'},
+            {num: 10, symbol: 'Ne', name: 'Neon', mass: 20.18, category: 'noble', row: 2, col: 18, electrons: '2,8', state: 'Gas'},
+            {num: 11, symbol: 'Na', name: 'Sodium', mass: 22.99, category: 'alkali', row: 3, col: 1, electrons: '2,8,1', state: 'Solid'},
+            {num: 12, symbol: 'Mg', name: 'Magnesium', mass: 24.31, category: 'alkaline', row: 3, col: 2, electrons: '2,8,2', state: 'Solid'},
+            {num: 13, symbol: 'Al', name: 'Aluminum', mass: 26.98, category: 'post-transition', row: 3, col: 13, electrons: '2,8,3', state: 'Solid'},
+            {num: 14, symbol: 'Si', name: 'Silicon', mass: 28.09, category: 'metalloid', row: 3, col: 14, electrons: '2,8,4', state: 'Solid'},
+            {num: 15, symbol: 'P', name: 'Phosphorus', mass: 30.97, category: 'nonmetal', row: 3, col: 15, electrons: '2,8,5', state: 'Solid'},
+            {num: 16, symbol: 'S', name: 'Sulfur', mass: 32.07, category: 'nonmetal', row: 3, col: 16, electrons: '2,8,6', state: 'Solid'},
+            {num: 17, symbol: 'Cl', name: 'Chlorine', mass: 35.45, category: 'halogen', row: 3, col: 17, electrons: '2,8,7', state: 'Gas'},
+            {num: 18, symbol: 'Ar', name: 'Argon', mass: 39.95, category: 'noble', row: 3, col: 18, electrons: '2,8,8', state: 'Gas'},
+            {num: 19, symbol: 'K', name: 'Potassium', mass: 39.10, category: 'alkali', row: 4, col: 1, electrons: '2,8,8,1', state: 'Solid'},
+            {num: 20, symbol: 'Ca', name: 'Calcium', mass: 40.08, category: 'alkaline', row: 4, col: 2, electrons: '2,8,8,2', state: 'Solid'},
+            {num: 21, symbol: 'Sc', name: 'Scandium', mass: 44.96, category: 'transition', row: 4, col: 3, electrons: '2,8,9,2', state: 'Solid'},
+            {num: 22, symbol: 'Ti', name: 'Titanium', mass: 47.87, category: 'transition', row: 4, col: 4, electrons: '2,8,10,2', state: 'Solid'},
+            {num: 23, symbol: 'V', name: 'Vanadium', mass: 50.94, category: 'transition', row: 4, col: 5, electrons: '2,8,11,2', state: 'Solid'},
+            {num: 24, symbol: 'Cr', name: 'Chromium', mass: 52.00, category: 'transition', row: 4, col: 6, electrons: '2,8,13,1', state: 'Solid'},
+            {num: 25, symbol: 'Mn', name: 'Manganese', mass: 54.94, category: 'transition', row: 4, col: 7, electrons: '2,8,13,2', state: 'Solid'},
+            {num: 26, symbol: 'Fe', name: 'Iron', mass: 55.85, category: 'transition', row: 4, col: 8, electrons: '2,8,14,2', state: 'Solid'},
+            {num: 27, symbol: 'Co', name: 'Cobalt', mass: 58.93, category: 'transition', row: 4, col: 9, electrons: '2,8,15,2', state: 'Solid'},
+            {num: 28, symbol: 'Ni', name: 'Nickel', mass: 58.69, category: 'transition', row: 4, col: 10, electrons: '2,8,16,2', state: 'Solid'},
+            {num: 29, symbol: 'Cu', name: 'Copper', mass: 63.55, category: 'transition', row: 4, col: 11, electrons: '2,8,18,1', state: 'Solid'},
+            {num: 30, symbol: 'Zn', name: 'Zinc', mass: 65.39, category: 'transition', row: 4, col: 12, electrons: '2,8,18,2', state: 'Solid'},
+            {num: 31, symbol: 'Ga', name: 'Gallium', mass: 69.72, category: 'post-transition', row: 4, col: 13, electrons: '2,8,18,3', state: 'Solid'},
+            {num: 32, symbol: 'Ge', name: 'Germanium', mass: 72.64, category: 'metalloid', row: 4, col: 14, electrons: '2,8,18,4', state: 'Solid'},
+            {num: 33, symbol: 'As', name: 'Arsenic', mass: 74.92, category: 'metalloid', row: 4, col: 15, electrons: '2,8,18,5', state: 'Solid'},
+            {num: 34, symbol: 'Se', name: 'Selenium', mass: 78.96, category: 'nonmetal', row: 4, col: 16, electrons: '2,8,18,6', state: 'Solid'},
+            {num: 35, symbol: 'Br', name: 'Bromine', mass: 79.90, category: 'halogen', row: 4, col: 17, electrons: '2,8,18,7', state: 'Liquid'},
+            {num: 36, symbol: 'Kr', name: 'Krypton', mass: 83.80, category: 'noble', row: 4, col: 18, electrons: '2,8,18,8', state: 'Gas'}
+        ];
+
+        const table = document.getElementById('periodicTable');
+        
+        // Create grid with proper spacing
+        for (let row = 1; row <= 7; row++) {
+            for (let col = 1; col <= 18; col++) {
+                const element = elements.find(e => e.row === row && e.col === col);
+                
+                if (element) {
+                    const div = document.createElement('div');
+                    div.className = `element ${element.category}`;
+                    div.innerHTML = `
+                        <div class="atomic-number">${element.num}</div>
+                        <div class="symbol">${element.symbol}</div>
+                        <div class="name">${element.name}</div>
+                        <div class="atomic-mass">${element.mass}</div>
+                    `;
+                    div.onclick = () => showInfo(element);
+                    table.appendChild(div);
+                } else {
+                    const div = document.createElement('div');
+                    div.className = 'element empty';
+                    table.appendChild(div);
+                }
+            }
+        }
+
+        function showInfo(element) {
+            const panel = document.getElementById('infoPanel');
+            const name = document.getElementById('elementName');
+            const grid = document.getElementById('infoGrid');
+
+            name.textContent = `${element.name} (${element.symbol})`;
+            
+            grid.innerHTML = `
+                <div class="info-item">
+                    <div class="info-label">Atomic Number</div>
+                    <div class="info-value">${element.num}</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Atomic Mass</div>
+                    <div class="info-value">${element.mass}</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Category</div>
+                    <div class="info-value">${element.category.charAt(0).toUpperCase() + element.category.slice(1)}</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Electron Configuration</div>
+                    <div class="info-value">${element.electrons}</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">State at STP</div>
+                    <div class="info-value">${element.state}</div>
+                </div>
+            `;
+
+            panel.classList.add('show');
+        }
+    </script>
+</body>
+</html>

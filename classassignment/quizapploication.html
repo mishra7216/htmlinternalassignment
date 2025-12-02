@@ -1,0 +1,512 @@
+<?php
+// quiz_app_fixed.php - Fixed Online Quiz Application with Database
+
+session_start();
+
+// Database configuration
+$host = 'localhost';
+$dbname = 'quiz_db';
+$username = 'root';
+$password = '';
+
+// STEP 1: Try to connect and create database if it doesn't exist
+try {
+    // First connect without specifying database
+    $pdo_setup = new PDO("mysql:host=$host", $username, $password);
+    $pdo_setup->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    
+    // Create database if not exists
+    $pdo_setup->exec("CREATE DATABASE IF NOT EXISTS $dbname");
+    $pdo_setup->exec("USE $dbname");
+    
+    // Create tables if they don't exist
+    $pdo_setup->exec("CREATE TABLE IF NOT EXISTS questions (
+        id INT PRIMARY KEY AUTO_INCREMENT,
+        question_text TEXT NOT NULL,
+        option_a VARCHAR(255) NOT NULL,
+        option_b VARCHAR(255) NOT NULL,
+        option_c VARCHAR(255) NOT NULL,
+        option_d VARCHAR(255) NOT NULL,
+        correct_answer CHAR(1) NOT NULL,
+        category VARCHAR(50)
+    )");
+    
+    $pdo_setup->exec("CREATE TABLE IF NOT EXISTS quiz_results (
+        id INT PRIMARY KEY AUTO_INCREMENT,
+        user_name VARCHAR(100) NOT NULL,
+        score INT NOT NULL,
+        total_questions INT NOT NULL,
+        percentage DECIMAL(5,2),
+        quiz_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )");
+    
+    // Check if questions table is empty, if so, insert sample data
+    $result = $pdo_setup->query("SELECT COUNT(*) FROM questions");
+    $count = $result->fetchColumn();
+    
+    if ($count == 0) {
+        // Insert sample questions
+        $questions_data = [
+            ['What is the capital of India?', 'Mumbai', 'New Delhi', 'Kolkata', 'Chennai', 'B', 'Geography'],
+            ['Which planet is known as Red Planet?', 'Venus', 'Jupiter', 'Mars', 'Saturn', 'C', 'Science'],
+            ['Who wrote "Romeo and Juliet"?', 'Charles Dickens', 'William Shakespeare', 'Jane Austen', 'Mark Twain', 'B', 'Literature'],
+            ['What is 15 * 8?', '120', '125', '130', '115', 'A', 'Mathematics'],
+            ['Which is the largest ocean?', 'Atlantic', 'Indian', 'Arctic', 'Pacific', 'D', 'Geography'],
+            ['What is the speed of light?', '3 × 10^8 m/s', '3 × 10^6 m/s', '3 × 10^7 m/s', '3 × 10^5 m/s', 'A', 'Science'],
+            ['Who painted Mona Lisa?', 'Pablo Picasso', 'Vincent van Gogh', 'Leonardo da Vinci', 'Michelangelo', 'C', 'Art'],
+            ['What is the square root of 144?', '10', '11', '12', '13', 'C', 'Mathematics'],
+            ['Which programming language is known as "Mother of all languages"?', 'C', 'Java', 'Python', 'COBOL', 'A', 'Technology'],
+            ['In which year did India gain independence?', '1945', '1946', '1947', '1948', 'C', 'History']
+        ];
+        
+        $stmt = $pdo_setup->prepare("INSERT INTO questions (question_text, option_a, option_b, option_c, option_d, correct_answer, category) VALUES (?, ?, ?, ?, ?, ?, ?)");
+        
+        foreach ($questions_data as $q) {
+            $stmt->execute($q);
+        }
+    }
+    
+    // Now create the main PDO connection for the quiz
+    $pdo = new PDO("mysql:host=$host;dbname=$dbname;charset=utf8mb4", $username, $password);
+    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    
+} catch(PDOException $e) {
+    die("
+    <html>
+    <head>
+        <title>Database Error</title>
+        <style>
+            body { font-family: Arial, sans-serif; padding: 40px; background: #f8d7da; }
+            .error-box { background: white; padding: 30px; border-radius: 10px; border: 2px solid #dc3545; max-width: 600px; margin: 0 auto; }
+            h1 { color: #dc3545; }
+            code { background: #f5f5f5; padding: 2px 6px; border-radius: 3px; }
+        </style>
+    </head>
+    <body>
+        <div class='error-box'>
+            <h1>❌ Database Connection Error</h1>
+            <p><strong>Error:</strong> " . $e->getMessage() . "</p>
+            <h3>Troubleshooting Steps:</h3>
+            <ol>
+                <li>Make sure MySQL/MariaDB is running</li>
+                <li>Check your database credentials:
+                    <ul>
+                        <li>Host: <code>$host</code></li>
+                        <li>Username: <code>$username</code></li>
+                        <li>Password: <code>$password</code></li>
+                    </ul>
+                </li>
+                <li>Ensure the MySQL user has permission to create databases</li>
+                <li>Try accessing MySQL via command line: <code>mysql -u root -p</code></li>
+            </ol>
+        </div>
+    </body>
+    </html>");
+}
+
+// Handle quiz submission
+if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['submit_quiz'])) {
+    $user_name = trim($_POST['user_name']);
+    $answers = $_POST['answer'] ?? array();
+    
+    // Validate user name
+    if (empty($user_name)) {
+        $error_message = "Please enter your name!";
+    } else {
+        try {
+            // Fetch all questions
+            $stmt = $pdo->query("SELECT id, correct_answer FROM questions");
+            $questions = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            
+            $score = 0;
+            $total = count($questions);
+            
+            // Calculate score
+            foreach ($questions as $question) {
+                if (isset($answers[$question['id']]) && $answers[$question['id']] == $question['correct_answer']) {
+                    $score++;
+                }
+            }
+            
+            $percentage = ($total > 0) ? ($score / $total) * 100 : 0;
+            
+            // Save result to database
+            $stmt = $pdo->prepare("INSERT INTO quiz_results (user_name, score, total_questions, percentage) VALUES (?, ?, ?, ?)");
+            $stmt->execute([$user_name, $score, $total, $percentage]);
+            
+            // Store in session
+            $_SESSION['quiz_result'] = array(
+                'name' => $user_name,
+                'score' => $score,
+                'total' => $total,
+                'percentage' => $percentage
+            );
+            
+            // Redirect to results page
+            header('Location: ?result=1');
+            exit();
+            
+        } catch(PDOException $e) {
+            $error_message = "Error saving quiz results: " . $e->getMessage();
+        }
+    }
+}
+
+// Fetch all questions for quiz
+try {
+    $stmt = $pdo->query("SELECT * FROM questions ORDER BY id");
+    $questions = $stmt->fetchAll(PDO::FETCH_ASSOC);
+} catch(PDOException $e) {
+    die("Error fetching questions: " . $e->getMessage());
+}
+
+// Fetch leaderboard
+try {
+    $stmt = $pdo->query("SELECT user_name, score, total_questions, percentage, quiz_date FROM quiz_results ORDER BY percentage DESC, quiz_date DESC LIMIT 10");
+    $leaderboard = $stmt->fetchAll(PDO::FETCH_ASSOC);
+} catch(PDOException $e) {
+    $leaderboard = array();
+}
+?>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Online Quiz Application</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+            font-size: 36px;
+        }
+
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border: 2px solid #dc3545;
+        }
+
+        .quiz-container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            margin-bottom: 30px;
+        }
+
+        .user-info {
+            margin-bottom: 30px;
+        }
+
+        .user-info label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .user-info input {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        .user-info input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .question-card {
+            background: #f8f9ff;
+            border: 2px solid #667eea;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 20px;
+        }
+
+        .question-number {
+            color: #667eea;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .question-text {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        .options {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .option {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            background: white;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .option:hover {
+            border-color: #667eea;
+            background: #f0f0ff;
+        }
+
+        .option input[type="radio"] {
+            margin-right: 10px;
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+
+        .submit-btn {
+            width: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px;
+            font-size: 18px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+            margin-top: 20px;
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .submit-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .result-container {
+            text-align: center;
+            padding: 40px;
+        }
+
+        .result-icon {
+            font-size: 80px;
+            margin-bottom: 20px;
+        }
+
+        .result-score {
+            font-size: 48px;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .result-text {
+            font-size: 24px;
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        .leaderboard {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+
+        .leaderboard h2 {
+            color: #667eea;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .leaderboard-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .leaderboard-table th {
+            background: #667eea;
+            color: white;
+            padding: 15px;
+            text-align: left;
+        }
+
+        .leaderboard-table td {
+            padding: 15px;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .leaderboard-table tr:hover {
+            background: #f8f9ff;
+        }
+
+        .rank {
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .no-questions {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎯 Online Quiz Application</h1>
+
+        <?php if (isset($error_message)): ?>
+            <div class="quiz-container">
+                <div class="error-message">
+                    ❌ <?php echo htmlspecialchars($error_message); ?>
+                </div>
+                <button onclick="window.location.href='?'" class="submit-btn">
+                    Try Again
+                </button>
+            </div>
+        <?php elseif (isset($_GET['result']) && isset($_SESSION['quiz_result'])): ?>
+            <div class="quiz-container">
+                <div class="result-container">
+                    <?php
+                    $result = $_SESSION['quiz_result'];
+                    $icon = $result['percentage'] >= 70 ? '🎉' : ($result['percentage'] >= 50 ? '👍' : '📚');
+                    ?>
+                    <div class="result-icon"><?php echo $icon; ?></div>
+                    <div class="result-score"><?php echo $result['score']; ?> / <?php echo $result['total']; ?></div>
+                    <div class="result-text">
+                        Score: <?php echo number_format($result['percentage'], 2); ?>%
+                    </div>
+                    <p style="font-size: 18px; color: #666; margin-bottom: 20px;">
+                        Great job, <?php echo htmlspecialchars($result['name']); ?>!
+                    </p>
+                    <button onclick="window.location.href='?'" class="submit-btn">
+                        Take Quiz Again
+                    </button>
+                </div>
+            </div>
+            <?php unset($_SESSION['quiz_result']); ?>
+        <?php else: ?>
+            <?php if (empty($questions)): ?>
+                <div class="quiz-container">
+                    <div class="no-questions">
+                        <p style="font-size: 48px;">📝</p>
+                        <p>No questions available. Please check database setup.</p>
+                    </div>
+                </div>
+            <?php else: ?>
+                <div class="quiz-container">
+                    <form method="POST" onsubmit="return validateForm()">
+                        <div class="user-info">
+                            <label for="user_name">Enter Your Name:</label>
+                            <input type="text" id="user_name" name="user_name" placeholder="Your name" required minlength="2">
+                        </div>
+
+                        <?php foreach ($questions as $index => $question): ?>
+                            <div class="question-card">
+                                <div class="question-number">Question <?php echo $index + 1; ?> / <?php echo count($questions); ?></div>
+                                <div class="question-text"><?php echo htmlspecialchars($question['question_text']); ?></div>
+                                <div class="options">
+                                    <label class="option">
+                                        <input type="radio" name="answer[<?php echo $question['id']; ?>]" value="A" required>
+                                        <span>A. <?php echo htmlspecialchars($question['option_a']); ?></span>
+                                    </label>
+                                    <label class="option">
+                                        <input type="radio" name="answer[<?php echo $question['id']; ?>]" value="B">
+                                        <span>B. <?php echo htmlspecialchars($question['option_b']); ?></span>
+                                    </label>
+                                    <label class="option">
+                                        <input type="radio" name="answer[<?php echo $question['id']; ?>]" value="C">
+                                        <span>C. <?php echo htmlspecialchars($question['option_c']); ?></span>
+                                    </label>
+                                    <label class="option">
+                                        <input type="radio" name="answer[<?php echo $question['id']; ?>]" value="D">
+                                        <span>D. <?php echo htmlspecialchars($question['option_d']); ?></span>
+                                    </label>
+                                </div>
+                            </div>
+                        <?php endforeach; ?>
+
+                        <button type="submit" name="submit_quiz" class="submit-btn">Submit Quiz</button>
+                    </form>
+                </div>
+            <?php endif; ?>
+        <?php endif; ?>
+
+        <div class="leaderboard">
+            <h2>🏆 Leaderboard - Top 10</h2>
+            <?php if (empty($leaderboard)): ?>
+                <p style="text-align: center; color: #999; padding: 20px;">No results yet. Be the first to take the quiz!</p>
+            <?php else: ?>
+                <table class="leaderboard-table">
+                    <thead>
+                        <tr>
+                            <th>Rank</th>
+                            <th>Name</th>
+                            <th>Score</th>
+                            <th>Percentage</th>
+                            <th>Date</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php foreach ($leaderboard as $index => $entry): ?>
+                            <tr>
+                                <td class="rank">#<?php echo $index + 1; ?></td>
+                                <td><?php echo htmlspecialchars($entry['user_name']); ?></td>
+                                <td><?php echo $entry['score']; ?> / <?php echo $entry['total_questions']; ?></td>
+                                <td><?php echo number_format($entry['percentage'], 2); ?>%</td>
+                                <td><?php echo date('M d, Y', strtotime($entry['quiz_date'])); ?></td>
+                            </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            <?php endif; ?>
+        </div>
+    </div>
+
+    <script>
+        function validateForm() {
+            const userName = document.getElementById('user_name').value.trim();
+            if (userName.length < 2) {
+                alert('Please enter a valid name (at least 2 characters)');
+                return false;
+            }
+            return true;
+        }
+    </script>
+</body>
+</html>
